@@ -1,70 +1,115 @@
-# Getting Started with Create React App
+# Zustand Store Setup
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project demonstrates a Zustand store setup with `immer`, `persist`, and `devtools` middleware. The store manages a
+list of courses, allowing for adding, removing, and toggling courses with state immutability, persistence, and debugging
+capabilities.
 
-## Available Scripts
+## Installation
 
-In the project directory, you can run:
+To install Zustand and the necessary dependencies, run:
 
-### `npm start`
+```bash
+npm install zustand immer
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+##### Or if using yarn:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```bash
+yarn add zustand immer
+```
 
-### `npm test`
+## Usage
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Basic Store Setup
 
-### `npm run build`
+#### 1. Create the store
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```javascript
+import {create} from 'zustand';
+import {persist} from 'zustand/middleware';
+import {immer} from 'zustand/middleware/immer';
+import {devtools} from 'zustand/middleware';
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+const store = (set) => ({
+    courses: [],
+    addCourse: (course) => set((state) => {
+        state.courses.unshift(course);
+    }),
+    removeCourse: (courseId) => set((state) => {
+        state.courses = state.courses.filter(c => c.id !== courseId);
+    }),
+    toggleCourse: (courseId) => set((state) => {
+        const course = state.courses.find(c => c.id === courseId);
+        if (course) {
+            course.completed = !course.completed;
+        }
+    }),
+});
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+const useStore = create(
+    devtools(
+        persist(
+            immer(store),
+            {
+                name: 'course-storage', // Unique name
+            }
+        )
+    )
+);
 
-### `npm run eject`
+export default useStore;
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+#### 2. Use the store in a component
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```javascript
+import useStore from './path/to/your/store';
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+const Component = () => {
+    const courses = useStore(state => state.courses);
+    const addCourse = useStore(state => state.addCourse);
+    const removeCourse = useStore(state => state.removeCourse);
+    const toggleCourse = useStore(state => state.toggleCourse);
 
-## Learn More
+    // Example usage
+    const handleAddCourse = () => {
+        const newCourse = {id: 1, title: 'React Basics', completed: false};
+        addCourse(newCourse);
+    };
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+    return (
+        <div>
+            <button onClick={handleAddCourse}>Add Course</button>
+            {/* Render courses */}
+        </div>
+    );
+};
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Middleware
 
-### Code Splitting
+- **immer**: Allows you to write simpler state updates by enabling direct mutations within the `set` function while
+  keeping the state immutable under the hood.
+- **persist**: Persists the store's state in `localStorage` or any other storage engine you choose. This setup ensures
+  that the state persists even after a page reload.
+- **devtools**: Integrates with Redux DevTools, enabling you to inspect and debug the Zustand store’s state changes.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+# Zustand Library
 
-### Analyzing the Bundle Size
+Zustand is a small, fast, and scalable state management library for React. It allows you to create a global store to
+manage the state across your application components. Zustand is known for its simplicity and flexibility, making it a
+popular choice for both small and large applications.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Key Features:
 
-### Making a Progressive Web App
+- **No biolerplate**: Zustand has a minimal API that is easy to set up and use without the need for extensive
+  configuration.
+- **Fast and lightweight**:The library is designed to be small and performant, with a focus on delivering fast state updates.
+- **Flexible**: Zustand works well with React's component-based architecture and can be easily integrated with other tools and libraries.
+- **Middleware support**:Zustand supports middleware such as `persist`, `immer`, and `devtools`, allowing for advanced state management capabilities like persistence and debugging.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Official Documentation
 
-### Advanced Configuration
+For more detailed information on Zustand, visit the [official documentation](https://docs.pmnd.rs/zustand/getting-started/introduction).
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
